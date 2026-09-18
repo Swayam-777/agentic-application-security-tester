@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Security Testing Framework</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>Automated Security Testing Framework</h1>
+      <p class="tagline">LLM-based agentic applications, tested against the OWASP Top 10 for Agentic Applications</p>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <section class="agents-grid">
+      {% for id, agent in agents.items() %}
+      <article class="agent-card" data-agent-id="{{ id }}">
+        <span class="category-tag">{{ agent.category }}</span>
+        <h2>{{ agent.name }}</h2>
+        <p>{{ agent.description }}</p>
+        <button class="run-btn" onclick="runTest('{{ id }}')">Run test</button>
+      </article>
+      {% endfor %}
+    </section>
+
+    <section class="result-panel" id="result-panel" hidden>
+      <h2>Latest result</h2>
+      <div id="verdict-badge" class="verdict-badge"></div>
+      <p id="result-message" class="result-message"></p>
+      <div id="actions-block"></div>
+    </section>
+
+    <section class="history-panel">
+      <h2>Run history</h2>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Agent</th>
+              <th>Category</th>
+              <th>Verdict</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+      <p id="no-history" class="empty-state">No tests run yet this session. Pick an agent above and run a test.</p>
+    </section>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
