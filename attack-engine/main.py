@@ -14,8 +14,9 @@ print("=" * 60)
 print("\nAvailable Security Test Categories:")
 print("1. ASI01 - Goal Hijacking")
 print("2. ASI02 - Tool Misuse")
+print("3. ASI05 - Unsafe Code Execution")
 
-choice = input("\nEnter category number (1 or 2): ")
+choice = input("\nEnter category number (1, 2, or 3): ")
 
 
 if choice == "1":
@@ -30,7 +31,13 @@ elif choice == "2":
     run_all_attacks("ASI02_tool_misuse")
 
 
+elif choice == "3":
+
+    print("\nStarting ASI05 - Unsafe Code Execution tests...")
+    run_all_attacks("ASI05_unsafe_code_execution")
+
+
 else:
 
     print("\nInvalid choice.")
-    print("Please run the program again and enter 1 or 2.")
+    print("Please run the program again and enter 1, 2, or 3.")

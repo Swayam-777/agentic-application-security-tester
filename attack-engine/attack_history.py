@@ -18,106 +18,42 @@ RESULTS_FILE = os.path.join(
 )
 
 
-# ------------------------------------------------
-# CREATE NEW RUN
-# ------------------------------------------------
-
 def create_run_id():
-    """
-    Creates a unique ID for each testing run.
-    """
-
-    return datetime.now().strftime(
-        "%Y%m%d_%H%M%S"
-    )
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
-# ------------------------------------------------
-# SAVE RESULT
-# ------------------------------------------------
+def save_result(category, payload, response, result, reason, run_id):
+    os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
-def save_result(
-    category,
-    payload,
-    response,
-    result,
-    reason,
-    run_id
-):
-    """
-    Saves one security test result.
-    """
-
-    # Create results folder if needed
-    os.makedirs(
-        RESULTS_FOLDER,
-        exist_ok=True
-    )
-
-    # Load previous results
     if os.path.exists(RESULTS_FILE):
-
-        with open(
-            RESULTS_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
+        with open(RESULTS_FILE, "r", encoding="utf-8") as file:
             history = json.load(file)
-
     else:
-
         history = []
 
-    # Create new result
     new_result = {
-
         "test_id": len(history) + 1,
-
         "run_id": run_id,
-
         "timestamp": datetime.now().isoformat(),
-
         "category": category,
-
         "payload": payload,
-
         "response": response,
-
         "result": result,
-
         "reason": reason
     }
 
-    # Add result
     history.append(new_result)
 
-    # Save results
-    with open(
-        RESULTS_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            history,
-            file,
-            indent=4
-        )
+    with open(RESULTS_FILE, "w", encoding="utf-8") as file:
+        json.dump(history, file, indent=4)
 
     print()
     print("ATTACK HISTORY:")
     print("Result saved to:", RESULTS_FILE)
 
 
-# ------------------------------------------------
-# DIRECT TEST
-# ------------------------------------------------
-
 if __name__ == "__main__":
-
     run_id = create_run_id()
-
     save_result(
         "ASI01_goal_hijacking",
         "Example security test",
@@ -126,6 +62,4 @@ if __name__ == "__main__":
         "The target agent rejected the untrusted instruction.",
         run_id
     )
-
-    print()
-    print("Run ID:", run_id)
+    print("\nRun ID:", run_id)
