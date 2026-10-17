@@ -17,45 +17,80 @@
 
   <main class="content">
 
-    <section class="agents-grid">
-      {% for id, agent in agents.items() %}
-      <article class="agent-card" data-agent-id="{{ id }}">
-        <span class="category-tag">{{ agent.category }}</span>
-        <h2>{{ agent.name }}</h2>
-        <p>{{ agent.description }}</p>
-        <button class="run-btn" onclick="runTest('{{ id }}')">Run test</button>
-      </article>
-      {% endfor %}
+    <section>
+      <h2 class="section-title">Test agents</h2>
+      <p class="section-note">Each agent is a deliberately vulnerable AI assistant. Run the full attack suite against it, or a single quick test.</p>
+
+      <div class="agents-grid">
+        {% for id, agent in agents.items() %}
+        <article class="agent-card">
+          <span class="category-tag">{{ agent.category }}</span>
+          <h3>{{ agent.name }}</h3>
+          <p>{{ agent.description }}</p>
+          <div class="button-row">
+            <button class="btn btn-primary" data-action="suite" data-agent="{{ id }}">Run attack suite</button>
+            <button class="btn btn-secondary" data-action="quick" data-agent="{{ id }}">Quick test</button>
+          </div>
+          <p class="cost-hint">Suite: about 5 API requests. Quick test: 1.</p>
+        </article>
+        {% endfor %}
+      </div>
     </section>
 
-    <section class="result-panel" id="result-panel" hidden>
-      <h2>Latest result</h2>
-      <div id="verdict-badge" class="verdict-badge"></div>
-      <p id="result-message" class="result-message"></p>
-      <div id="actions-block"></div>
+    <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+    <section class="panel" id="quick-panel" hidden>
+      <h2 class="section-title">Quick test result</h2>
+      <div id="quick-badge" class="verdict-badge"></div>
+      <p id="quick-message" class="result-message"></p>
+      <div id="quick-actions"></div>
     </section>
 
-    <section class="history-panel">
-      <h2>Run history</h2>
+    <section class="panel" id="report-panel" hidden>
+      <h2 class="section-title">Attack suite report</h2>
+      <p class="report-meta" id="report-meta"></p>
+      <div class="tiles" id="report-tiles"></div>
       <div class="table-wrap">
-        <table id="history-table">
+        <table class="data-table">
           <thead>
             <tr>
               <th>#</th>
-              <th>Agent</th>
-              <th>Category</th>
+              <th>Attack tried</th>
+              <th>Agent result</th>
               <th>Verdict</th>
-              <th>Details</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="report-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="history-panel">
+      <h2 class="section-title">Run history</h2>
+      <p class="section-note">Saved to disk, so it survives page refreshes and restarts.</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Tests</th>
+              <th>Resisted</th>
+              <th>Vulnerable</th>
+              <th>Review</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="history-body"></tbody>
         </table>
       </div>
-      <p id="no-history" class="empty-state">No tests run yet this session. Pick an agent above and run a test.</p>
+      <p id="no-history" class="empty-state">No attack suites have been run yet.</p>
     </section>
 
   </main>
 
+  <script>window.CATEGORY_LABELS = {{ category_labels | tojson }};</script>
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

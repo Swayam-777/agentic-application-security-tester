@@ -65,8 +65,13 @@ def run_single_test(
     try:
         agent_result = process_ticket(ticket, category)
     except Exception as e:
+        if "DAILY_QUOTA_EXHAUSTED" in str(e):
+            raise  # stop the whole run cleanly - see main.py
         print(f"\n[ERROR] Target agent call failed: {e}")
-        agent_result = {"verdict": "NO_ACTION", "message": f"Test failed due to an error: {e}"}
+        agent_result = {
+            "verdict": "NO_ACTION",
+            "message": f"Test failed due to an error: {str(e)[:150]}",
+        }
 
     print()
     print("TARGET AGENT RESULT:")

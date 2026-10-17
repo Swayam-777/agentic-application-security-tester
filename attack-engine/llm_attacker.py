@@ -22,6 +22,10 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
+# Different model from the target agents on purpose: free-tier quota
+# is counted per model, so this gives each side its own daily budget.
+ATTACKER_MODEL = os.getenv("ATTACKER_MODEL", "gemini-3.1-flash-lite")
+
 
 def generate_test(category, previous_payload, previous_response):
     """
@@ -64,7 +68,7 @@ Now generate ONE different, realistic test.
     try:
 
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model=ATTACKER_MODEL,
             contents=prompt
         )
 

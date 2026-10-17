@@ -13,6 +13,7 @@ run_agent() can be called two ways:
 """
 
 import os
+import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -20,21 +21,40 @@ from google.genai import types
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-MODEL = "gemini-3.6-flash"
-import time
+MODEL = os.getenv("AGENT_MODEL", "gemini-3.5-flash-lite")
+
 
 def call_gemini_with_retry(prompt, config, max_retries=3, delay=5):
-    """Retries the Gemini call if it hits a transient server error
-    (like 503 UNAVAILABLE - the model being temporarily overloaded)."""
+    """Calls Gemini, retrying only on TEMPORARY errors (503 overload,
+    per-minute rate limits). If the DAILY free quota is used up,
+    retrying cannot help and only wastes requests, so we stop at once
+    with a clear message instead."""
     for attempt in range(1, max_retries + 1):
         try:
-            return client.models.generate_content(model=MODEL, contents=prompt, config=config)
+            return client.models.generate_content(
+                model=MODEL, contents=prompt, config=config
+            )
         except Exception as e:
-            if attempt == max_retries:
+            message = str(e)
+
+            if "PerDay" in message:
+                raise RuntimeError(
+                    "DAILY_QUOTA_EXHAUSTED: today's free request limit for "
+                    f"model '{MODEL}' is used up. Change AGENT_MODEL in .env "
+                    "to another model, or wait for the reset (midnight Pacific time)."
+                ) from e
+
+            transient = any(
+                code in message
+                for code in ("503", "500", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED")
+            )
+            if not transient or attempt == max_retries:
                 raise
-            print(f"\n[WARNING] Gemini call failed (attempt {attempt}/{max_retries}): {e}")
-            print(f"Retrying in {delay} seconds...")
-            time.sleep(delay)
+
+            wait = delay * attempt
+            print(f"\n[WARNING] Gemini call failed (attempt {attempt}/{max_retries}): {message[:120]}")
+            print(f"Retrying in {wait} seconds...")
+            time.sleep(wait)
 
 order_database = {
     "ORD-1001": {"customer": "friend@gmail.com", "total": 49.99},
