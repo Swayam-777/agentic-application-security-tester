@@ -14,7 +14,7 @@ the same agents validated in the dashboards.
 
 from payload_library import PAYLOADS
 from target_agent import process_ticket
-from evaluator import evaluate_result
+from llm_judge import judge_result
 from attack_history import save_result, create_run_id
 from llm_attacker import generate_test
 
@@ -78,7 +78,12 @@ def run_single_test(
     print(agent_result)
 
     # Evaluate the agent's own verdict
-    result, reason = evaluate_result(agent_result)
+    result, reason = judge_result(
+        payload,
+        category,
+        agent_result,
+        actions=agent_result.get("actions"),
+    )
 
     print()
     print("EVALUATOR:")

@@ -3,94 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automated Security Testing Framework</title>
+  <title>SentinelX — Agentic AI Security &amp; Evaluation Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <h1>Automated Security Testing Framework</h1>
-      <p class="tagline">LLM-based agentic applications, tested against the OWASP Top 10 for Agentic Applications</p>
-    </div>
-  </header>
+  <div class="app-shell" id="app-shell">
 
-  <main class="content">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <strong>SentinelX</strong>
+          <span>Agentic AI Security</span>
+        </div>
+      </div>
 
-    <section>
-      <h2 class="section-title">Test agents</h2>
-      <p class="section-note">Each agent is a deliberately vulnerable AI assistant. Run the full attack suite against it, or a single quick test.</p>
+      <nav aria-label="Primary">
+        <ul class="nav-list">
+          <li><button class="nav-item" data-view="overview" title="Overview"><span class="nav-icon">&#9679;</span><span class="nav-label">Overview</span></button></li>
+          <li><button class="nav-item" data-view="workspace" title="Assessments"><span class="nav-icon">&#9881;</span><span class="nav-label">Assessments</span></button></li>
+          <li><button class="nav-item" data-view="explorer" title="Vulnerabilities"><span class="nav-icon">&#9888;</span><span class="nav-label">Vulnerabilities</span></button></li>
+          <li><button class="nav-item" data-view="judge" title="LLM Judge"><span class="nav-icon">&#9878;</span><span class="nav-label">LLM Judge</span></button></li>
+          <li><button class="nav-item" data-view="history" title="Run History"><span class="nav-icon">&#8635;</span><span class="nav-label">Run History</span></button></li>
+          <li><button class="nav-item" data-view="reports" title="Reports"><span class="nav-icon">&#128196;</span><span class="nav-label">Reports</span></button></li>
+          <li><button class="nav-item" data-view="automation" title="Automations"><span class="nav-icon">&#8987;</span><span class="nav-label">Automations</span></button></li>
+          <li><button class="nav-item" data-view="settings" title="Settings"><span class="nav-icon">&#9881;&#65039;</span><span class="nav-label">Settings</span></button></li>
+        </ul>
+      </nav>
 
-      <div class="agents-grid">
-        {% for id, agent in agents.items() %}
-        <article class="agent-card">
-          <span class="category-tag">{{ agent.category }}</span>
-          <h3>{{ agent.name }}</h3>
-          <p>{{ agent.description }}</p>
-          <div class="button-row">
-            <button class="btn btn-primary" data-action="suite" data-agent="{{ id }}">Run attack suite</button>
-            <button class="btn btn-secondary" data-action="quick" data-agent="{{ id }}">Quick test</button>
+      <div class="sidebar-footer">
+        <button class="collapse-btn" id="collapse-btn" aria-label="Collapse sidebar">&#171; Collapse</button>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main-area">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-title" id="topbar-title">Overview</span>
+          <span class="topbar-breadcrumb" id="topbar-breadcrumb">SentinelX / Overview</span>
+        </div>
+        <div class="topbar-right">
+          <span class="conn-status" id="conn-status"><span class="conn-dot" id="conn-dot"></span><span id="conn-text">Checking…</span></span>
+          <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">&#8635;</button>
+          <button class="icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle light/dark theme">&#9789;</button>
+        </div>
+      </header>
+
+      <main class="main-scroll">
+
+        <!-- ============ OVERVIEW ============ -->
+        <section class="view" id="view-overview">
+          <div class="view-header">
+            <h2>Security overview</h2>
+            <p>Live summary built from every assessment run saved in <code>results/attack_results.json</code>. Nothing here is invented — an empty dashboard means no suites have been run yet.</p>
           </div>
-          <p class="cost-hint">Suite: about 5 API requests. Quick test: 1.</p>
-        </article>
-        {% endfor %}
-      </div>
-    </section>
+          <div id="overview-content"><div class="skeleton" style="height:120px;"></div></div>
+        </section>
 
-    <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+        <!-- ============ WORKSPACE ============ -->
+        <section class="view" id="view-workspace" hidden>
+          <div class="view-header">
+            <h2>Assessment workspace</h2>
+            <p>Each agent below is a deliberately vulnerable AI assistant, mapped to one OWASP Agentic-AI risk category. Run the full attack suite, or a single quick test.</p>
+          </div>
 
-    <section class="panel" id="quick-panel" hidden>
-      <h2 class="section-title">Quick test result</h2>
-      <div id="quick-badge" class="verdict-badge"></div>
-      <p id="quick-message" class="result-message"></p>
-      <div id="quick-actions"></div>
-    </section>
+          <div id="workspace-status"></div>
 
-    <section class="panel" id="report-panel" hidden>
-      <h2 class="section-title">Attack suite report</h2>
-      <p class="report-meta" id="report-meta"></p>
-      <div class="tiles" id="report-tiles"></div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Attack tried</th>
-              <th>Agent result</th>
-              <th>Verdict</th>
-              <th>Reason</th>
-            </tr>
-          </thead>
-          <tbody id="report-body"></tbody>
-        </table>
-      </div>
-    </section>
+          <div class="grid-cards" id="agents-grid">
+            {% for id, agent in agents.items() %}
+            <article class="agent-card">
+              <span class="category-tag">{{ agent.category }}</span>
+              <h3>{{ agent.name }}</h3>
+              <p>{{ agent.description }}</p>
+              <div class="button-row">
+                <button class="btn btn-primary" data-action="suite" data-agent="{{ id }}">Run attack suite</button>
+                <button class="btn btn-secondary" data-action="quick" data-agent="{{ id }}">Quick test</button>
+              </div>
+              <p class="cost-hint">Suite: about 5 API requests. Quick test: 1.</p>
+            </article>
+            {% endfor %}
+          </div>
 
-    <section class="history-panel">
-      <h2 class="section-title">Run history</h2>
-      <p class="section-note">Saved to disk, so it survives page refreshes and restarts.</p>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Category</th>
-              <th>Tests</th>
-              <th>Resisted</th>
-              <th>Vulnerable</th>
-              <th>Review</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="history-body"></tbody>
-        </table>
-      </div>
-      <p id="no-history" class="empty-state">No attack suites have been run yet.</p>
-    </section>
+          <section class="card" id="quick-panel" style="margin-top:1.5rem;" hidden>
+            <p class="card-title">Quick test result</p>
+            <div id="quick-badge" class="badge"></div>
+            <p id="quick-message" style="margin:0.8rem 0;"></p>
+            <div id="quick-actions"></div>
+          </section>
 
-  </main>
+          <section id="suite-report-host" style="margin-top:1.5rem;"></section>
+        </section>
+
+        <!-- ============ VULNERABILITY EXPLORER ============ -->
+        <section class="view" id="view-explorer" hidden>
+          <div class="view-header">
+            <h2>Vulnerability explorer</h2>
+            <p>Every individual test from every run, aggregated and searchable. Built from <code>/api/history</code> + <code>/api/report</code> — the same data your reports use.</p>
+          </div>
+          <div id="explorer-content"><div class="skeleton" style="height:300px;"></div></div>
+        </section>
+
+        <!-- ============ LLM JUDGE ============ -->
+        <section class="view" id="view-judge" hidden>
+          <div class="view-header">
+            <h2>LLM-as-a-judge results</h2>
+            <p>Independent evaluation detail for a selected run — the judge's own reasoning, confidence, and whether it agreed with the target agent's self-reported verdict.</p>
+          </div>
+          <div class="toolbar">
+            <select id="judge-run-select"><option value="">Select a run…</option></select>
+          </div>
+          <div id="judge-content"></div>
+        </section>
+
+        <!-- ============ RUN HISTORY ============ -->
+        <section class="view" id="view-history" hidden>
+          <div class="view-header">
+            <h2>Run history</h2>
+            <p>Every past assessment run, saved to disk, so it survives page refreshes and restarts.</p>
+          </div>
+          <div id="history-content"><div class="skeleton" style="height:200px;"></div></div>
+        </section>
+
+        <!-- ============ REPORTS ============ -->
+        <section class="view" id="view-reports" hidden>
+          <div class="view-header">
+            <h2>Reports</h2>
+            <p>One report per completed run. Export/download is not wired to a backend endpoint yet — shown here honestly rather than faked.</p>
+          </div>
+          <div id="reports-content"><div class="skeleton" style="height:200px;"></div></div>
+        </section>
+
+        <!-- ============ AUTOMATION ============ -->
+        <section class="view" id="view-automation" hidden>
+          <div class="view-header">
+            <h2>Automation center <span class="stub-badge">Not connected</span></h2>
+            <p>Scheduled assessments, regression testing, and CI/CD integration are not implemented in the current backend. This view is an honest placeholder, not a working feature.</p>
+          </div>
+          <div class="card">
+            <p class="card-title">What would live here</p>
+            <ul style="color:var(--text-muted); font-size:0.88rem; line-height:1.9;">
+              <li>Scheduled assessment runs (needs a scheduler/cron route)</li>
+              <li>Regression comparison between runs (needs a diff endpoint)</li>
+              <li>Notification settings (needs a notifications backend)</li>
+              <li>CI/CD trigger hooks (needs a webhook/CLI entrypoint)</li>
+            </ul>
+            <p style="color:var(--text-faint); font-size:0.8rem; margin-bottom:0;">None of these exist in <code>app.py</code> today — they're listed here only as a roadmap, not as working controls.</p>
+          </div>
+        </section>
+
+        <!-- ============ SETTINGS ============ -->
+        <section class="view" id="view-settings" hidden>
+          <div class="view-header">
+            <h2>Settings</h2>
+            <p>Read-only configuration info. API keys and secrets live only in your local <code>.env</code> file and are never sent to or shown by the browser.</p>
+          </div>
+
+          <div class="grid-cards">
+            <div class="card">
+              <p class="card-title">Appearance</p>
+              <div class="button-row">
+                <button class="btn btn-secondary btn-small" id="settings-theme-dark">Dark</button>
+                <button class="btn btn-secondary btn-small" id="settings-theme-light">Light</button>
+              </div>
+              <p style="color:var(--text-faint); font-size:0.78rem; margin-top:0.6rem; margin-bottom:0;">Saved in this browser only.</p>
+            </div>
+
+            <div class="card">
+              <p class="card-title">Judge configuration</p>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.5rem 0;">Independent panel: Gemini + Groq (free-tier). Model names are set via <code>JUDGE_GEMINI_MODEL</code> / <code>JUDGE_GROQ_MODEL</code> in <code>.env</code> — not editable from this page, since the browser never has access to your keys.</p>
+            </div>
+
+            <div class="card">
+              <p class="card-title">Backend connection</p>
+              <p id="settings-conn" style="font-size:0.85rem; color:var(--text-muted);">Checking…</p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack"></div>
 
   <script>window.CATEGORY_LABELS = {{ category_labels | tojson }};</script>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

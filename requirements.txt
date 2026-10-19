@@ -1,4 +1,6 @@
+flask
+pydantic
 openai
-   anthropic
-   python-dotenv
+anthropic
+python-dotenv
 google-genai

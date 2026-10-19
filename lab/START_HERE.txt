@@ -1,0 +1,48 @@
+SETUP (Windows, about 2 minutes)
+
+1. Put this whole "lab" folder INSIDE your project folder (next to app.py).
+   Do not change or move anything else. Nothing existing is touched.
+
+2. Open Command Prompt in your project folder and run:
+       pip install flask
+   (That is the only install. No other packages are needed.)
+
+3. Keys. The lab reads your existing .env file automatically.
+   It already finds GROQ_API_KEY if you have it there. To add more free
+   providers (optional, they take over if Groq is busy), add lines like:
+       CEREBRAS_API_KEY=your_key
+       OPENROUTER_API_KEY=your_key
+       MISTRAL_API_KEY=your_key
+   No Gemini key is used by the lab.
+
+4. Start it:
+       cd lab
+       python run_lab.py
+   Open  http://127.0.0.1:5001  in your browser.
+
+5. No key yet? It still opens in "Simulated demo" mode (clearly labelled
+   in the app) so you can see everything working.
+
+To rename the product, change BRAND in core/config.py (one word).
+Scheduled checks run while the lab window is open.
+
+USING YOUR OWN TEST-BED AGENTS (no Gemini quota used)
+In Run Lab, choose "Your project agents". Your three test-bed agents run
+exactly as written, but their AI calls go to Groq / Cerebras / etc. instead
+of Gemini. This option only appears when a free provider key is set and your
+usual packages (google-genai, python-dotenv) are installed, as they already
+are for your project. Your files are never edited.
+
+YOUR OWN JUDGE AND EVALUATOR
+The lab also uses attack-engine/llm_judge.py as an extra juror (only its
+Groq part, never Gemini) and attack-engine/evaluator.py to read your
+test-bed agents' verdicts. Both are read-only. If the openai package is
+missing the extra juror is simply skipped:  pip install openai
+
+GEMINI IS USED TOO
+Put GEMINI_API_KEY in .env as before. Gemini is tried first. If it fails or its
+daily quota is used up, the lab switches automatically to Groq / Cerebras /
+OpenRouter / Mistral. For judging, every available AI votes; the lab weighs each
+AI by how often it agreed with the final decision and shows the best explanation.
+Finished live runs are also saved into your project's results file, so your
+original dashboard shows them. To switch that off, add LAB_SAVE_TO_PROJECT=0 to .env.

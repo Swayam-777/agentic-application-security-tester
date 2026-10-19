@@ -45,10 +45,11 @@ def process_ticket(ticket, category):
         }
 
     result = agent_module.run_agent(attack_payload=ticket["body"])
-
+    
     return {
         "verdict": result["verdict"],
         "message": result["message"],
+        "actions": result.get("actions", []),
     }
 
 

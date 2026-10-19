@@ -1,0 +1,14 @@
+{
+ "Groq": {
+  "agree": 2,
+  "total": 8
+ },
+ "Your judge \u00b7 Gemini": {
+  "agree": 8,
+  "total": 8
+ },
+ "Your judge \u00b7 Groq": {
+  "agree": 8,
+  "total": 8
+ }
+}
