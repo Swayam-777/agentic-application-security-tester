@@ -126,7 +126,7 @@ async function runSuite(agentId, onDone) {
   const statusHost = document.getElementById("workspace-status");
   statusLine(
     statusHost,
-    "Running attack suite… about 5 requests to the target model, can take up to a minute. Progress prints in the terminal running Flask.",
+    "Running attack suite… predefined attacks plus up to 4 adaptive PAIR attempts. This can take a couple of minutes. Progress prints in the terminal running Flask.",
     "info"
   );
   try {

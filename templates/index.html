@@ -86,7 +86,7 @@
                 <button class="btn btn-primary" data-action="suite" data-agent="{{ id }}">Run attack suite</button>
                 <button class="btn btn-secondary" data-action="quick" data-agent="{{ id }}">Quick test</button>
               </div>
-              <p class="cost-hint">Suite: about 5 API requests. Quick test: 1.</p>
+              <p class="cost-hint">Suite: predefined attacks + up to 4 adaptive (PAIR) attempts, roughly 5–12 API requests. Quick test: 1.</p>
             </article>
             {% endfor %}
           </div>
@@ -143,18 +143,18 @@
         <!-- ============ AUTOMATION ============ -->
         <section class="view" id="view-automation" hidden>
           <div class="view-header">
-            <h2>Automation center <span class="stub-badge">Not connected</span></h2>
-            <p>Scheduled assessments, regression testing, and CI/CD integration are not implemented in the current backend. This view is an honest placeholder, not a working feature.</p>
+            <h2>Automation center <span class="stub-badge">Planned · future scope</span></h2>
+            <p>This page describes planned extensions of the framework. None of these are implemented yet — they are shown as a roadmap, not as working controls.</p>
           </div>
           <div class="card">
-            <p class="card-title">What would live here</p>
+            <p class="card-title">Planned features</p>
             <ul style="color:var(--text-muted); font-size:0.88rem; line-height:1.9;">
-              <li>Scheduled assessment runs (needs a scheduler/cron route)</li>
-              <li>Regression comparison between runs (needs a diff endpoint)</li>
-              <li>Notification settings (needs a notifications backend)</li>
-              <li>CI/CD trigger hooks (needs a webhook/CLI entrypoint)</li>
+              <li><strong>Scheduled assessments</strong> — re-run the attack suites automatically (e.g. nightly) to catch regressions when an agent's prompt or model changes.</li>
+              <li><strong>Weak vs. hardened comparison</strong> — run the same attacks against both agent configurations and show the difference side by side.</li>
+              <li><strong>Content-integrity detection</strong> — flag destructive file overwrites, which the current AST detector does not treat as dangerous calls.</li>
+              <li><strong>CI/CD integration</strong> — a command-line entry point so the suite can run as a check before an agent is deployed.</li>
             </ul>
-            <p style="color:var(--text-faint); font-size:0.8rem; margin-bottom:0;">None of these exist in <code>app.py</code> today — they're listed here only as a roadmap, not as working controls.</p>
+            <p style="color:var(--text-faint); font-size:0.8rem; margin-bottom:0;">Today, assessments are started manually from the Assessments page or with <code>python attack-engine/main.py</code>.</p>
           </div>
         </section>
 
@@ -177,7 +177,12 @@
 
             <div class="card">
               <p class="card-title">Judge configuration</p>
-              <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.5rem 0;">Independent panel: Gemini + Groq (free-tier). Model names are set via <code>JUDGE_GEMINI_MODEL</code> / <code>JUDGE_GROQ_MODEL</code> in <code>.env</code> — not editable from this page, since the browser never has access to your keys.</p>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.5rem 0;">Hard evidence (AST check of executed code) always wins. Otherwise an independent Groq juror (default <code>openai/gpt-oss-120b</code>) decides; a Gemini juror can be added with <code>JUDGE_USE_GEMINI=1</code>. Models are set via <code>JUDGE_GROQ_MODEL</code> / <code>JUDGE_GEMINI_MODEL</code> in <code>.env</code> — not editable here, since the browser never has access to your keys.</p>
+            </div>
+
+            <div class="card">
+              <p class="card-title">Test-bed &amp; attacker</p>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.5rem 0;"><code>DATA_AGENT_MODE</code> — <code>weak</code> (default, deliberately vulnerable) or <code>hardened</code> for the ASI05 data agent.<br><code>MAX_PAIR_ATTEMPTS</code> — adaptive attack attempts per suite (default 4; stops early on a breakthrough).<br>Both are set in <code>.env</code>.</p>
             </div>
 
             <div class="card">
