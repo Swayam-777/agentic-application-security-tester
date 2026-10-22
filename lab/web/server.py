@@ -13,6 +13,10 @@ def err(code, msg, status=400):
     return jsonify({"error": {"code": code, "message": msg}}), status
 
 
+from core import plugins  # noqa: E402
+plugins.load(app)
+
+
 @app.get("/")
 def home():
     return render_template("console.html", brand=BRAND, tagline=TAGLINE)
@@ -40,6 +44,25 @@ def start_run():
     demo = want_demo or not runner.live_available()
     engine = "project" if body.get("mode") == "project" and not demo and testbed.available() else "lab"
     return jsonify({"job": runner.start_job(ids, demo, engine=engine), "demo": demo})
+
+
+@app.post("/api/quick-attack")
+def quick_attack():
+    body = request.get_json(silent=True) or {}
+    agent, text = body.get("agent"), str(body.get("text", "")).strip()
+    if agent not in AGENTS or not text:
+        return err("no_agent", "Choose an agent and some text to test.")
+    demo = not runner.live_available()
+    return jsonify({"job": runner.start_custom(agent, text, demo), "demo": demo})
+
+
+@app.post("/api/jobs/<job_id>/cancel")
+def job_cancel(job_id):
+    j = runner.JOBS.get(job_id)
+    if not j:
+        return err("gone", "That test session has ended.", 404)
+    j["cancel"] = True
+    return jsonify({"ok": True})
 
 
 @app.get("/api/jobs/<job_id>")

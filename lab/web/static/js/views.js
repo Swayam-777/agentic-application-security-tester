@@ -1,7 +1,7 @@
 import { h, countUp, gauge, sparkline, toast, typewriter } from "./fx.js";
 import { api } from "./api.js";
 import { createPlayer, runToEvents } from "./player.js";
-import { exportRunsCsv, exportRunsJson } from "./export.js";
+import { exportRunsCsv, exportRunsJson, printReport } from "./export.js";
 
 export const ctx = { meta: null, runs: [], go: () => {} };
 const fmt = (ts) => new Date(ts * 1000).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
@@ -89,26 +89,59 @@ export function initLab(preselect) {
 export async function startTest() {
   if (running) return;
   if (!selected.size) return toast("Choose at least one agent to test.", true);
-  const btn = document.getElementById("start-btn");
+  const btn = document.getElementById("start-btn"), stop = document.getElementById("stop-btn");
   const stage = document.getElementById("stage");
-  running = true; btn.disabled = true;
+  running = true; btn.disabled = true; stop.hidden = false;
   stage.replaceChildren();
+
+  // live status line + export bar that works as soon as results arrive
+  const collected = {};
+  const status = h("div", { cls: "callout", text: "Starting…" });
+  const exportBar = h("div", { cls: "export-row", style: "margin:0 0 14px" }, [
+    h("button", { cls: "btn ghost small", text: "Download CSV", onclick: () => doExport("csv") }),
+    h("button", { cls: "btn ghost small", text: "Download JSON", onclick: () => doExport("json") }),
+    h("button", { cls: "btn ghost small", text: "Print / save as PDF", onclick: () => doExport("pdf") })]);
+  const playerHost = h("div");
+  stage.append(status, exportBar, playerHost);
+  const doExport = (kind) => {
+    const runs = Object.values(collected).filter((r) => r.rungs.length);
+    if (!runs.length) return toast("Results appear here as soon as the first level finishes.", true);
+    if (kind === "csv") exportRunsCsv(runs, "report"); else if (kind === "json") exportRunsJson(runs, "report"); else printReport();
+  };
+
+  let jobId = null, stopped = false;
+  let playerRef = null;
+  stop.onclick = async () => { stop.disabled = true; stopped = true; if (playerRef) playerRef.clear(); status.textContent = "Stopping after the current step…"; if (jobId) api.cancel(jobId).catch(() => {}); };
   try {
     const { job } = await api.start([...selected], mode);
-    const player = createPlayer(stage, ctx.meta);
-    let since = 0, status = "running";
-    while (status === "running") {
-      const r = await api.job(job, since);
-      since = r.next; status = r.status;
-      if (r.events.length) player.push(r.events);
-      await new Promise((res) => setTimeout(res, 600));
+    jobId = job;
+    const player = createPlayer(playerHost, ctx.meta);
+    playerRef = player;
+    let since = 0, finished = false;
+    const take = (r) => {
+      since = r.next;
+      const evs = [];
+      for (const ev of r.events) {
+        if (ev.type === "status") status.textContent = ev.text;
+        else {
+          if (ev.type === "agent_start") collected[ev.agent] = { ts: Date.now() / 1000, agent_name: ev.name, category: (ctx.meta.agents.find((a) => a.id === ev.agent) || {}).category, demo: ev.demo, rungs: [] };
+          if (ev.type === "rung_done" && collected[ev.agent]) collected[ev.agent].rungs.push(ev);
+          if (ev.type === "job_done") finished = true;
+          if (stopped) continue;
+          evs.push(ev);
+        }
+      }
+      if (evs.length) player.push(evs);
+    };
+    while (!finished) {
+      take(await api.job(job, since));
+      if (!finished) await new Promise((res) => setTimeout(res, 800));
     }
-    const r = await api.job(job, since);
-    if (r.events.length) player.push(r.events);
     await player.finished();
+    status.textContent = stopped ? "Stopped. Results so far are in the download buttons above." : "Test complete. Download your report above, or find it in History.";
     toast("Test complete");
-  } catch (e) { toast(e.message, true); }
-  running = false; btn.disabled = false;
+  } catch (e) { status.textContent = e.message; toast(e.message, true); }
+  running = false; btn.disabled = false; stop.hidden = true; stop.disabled = false;
 }
 
 export async function replay(runId) {

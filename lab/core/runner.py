@@ -45,9 +45,13 @@ def run_agent(agent_id, demo, job, source="manual", engine="lab"):
     attacks = list(zip(a["labels"], a["ladder"]))
     i = 0
     while i < len(attacks):
+        if job.get("cancel"):
+            run["incomplete"] = True
+            break
         label, text = attacks[i]
         n = i + 1
         _emit(job, {"type": "rung_start", "agent": agent_id, "rung": n, "label": label, "attack": text})
+        _emit(job, {"type": "status", "text": f"Level {n} of {len(attacks)}: the agent is responding…"})
         try:
             if demo:
                 result = ag.run_sim(agent_id, n)
@@ -59,6 +63,7 @@ def run_agent(agent_id, demo, job, source="manual", engine="lab"):
             _emit(job, {"type": "error", "code": "providers_busy"})
             run["incomplete"] = True
             break
+        _emit(job, {"type": "status", "text": "The jury is deliberating…"})
         verdict = jd.judge(agent_id, i, result, demo, attack=text)
         rec = {"rung": n, "label": label, "attack": text, "reply": result["reply"],
                "actions": result["actions"], "via": result.get("via"), **verdict}
@@ -106,7 +111,22 @@ def detect_regression(run):
     return out
 
 
-def start_job(agent_ids, demo, source="manual", engine="lab"):
+def run_custom(agent_id, text, demo, job):
+    """One-off test of a single piece of text (used by the browser extension's right-click menu)."""
+    a = AGENTS[agent_id]
+    _emit(job, {"type": "agent_start", "agent": agent_id, "name": a["name"], "demo": demo})
+    _emit(job, {"type": "rung_start", "agent": agent_id, "rung": 1, "label": "Your text", "attack": text})
+    try:
+        result = ag.run_sim(agent_id, 5) if demo else ag.run_live(agent_id, 0, text)
+    except Exception:
+        _emit(job, {"type": "error", "code": "providers_busy"})
+        return
+    verdict = jd.judge(agent_id, 0, result, demo, attack=text)
+    _emit(job, {"type": "rung_done", "agent": agent_id, "rung": 1, "label": "Your text", "attack": text,
+                "reply": result["reply"], "actions": result["actions"], "via": result.get("via"), **verdict})
+
+
+def start_custom(agent_id, text, demo):
     job_id = store.new_id("job")
     job = {"id": job_id, "status": "running", "events": [], "started": time.time()}
     JOBS[job_id] = job
@@ -114,13 +134,40 @@ def start_job(agent_ids, demo, source="manual", engine="lab"):
     def work():
         with _run_lock:
             try:
-                for aid in agent_ids:
-                    if aid in AGENTS:
-                        run_agent(aid, demo, job, source, engine)
+                run_custom(agent_id, text[:1500], demo, job)
             except Exception:
                 _emit(job, {"type": "error", "code": "unexpected"})
             finally:
                 job["status"] = "done"
                 _emit(job, {"type": "job_done"})
+    threading.Thread(target=work, daemon=True).start()
+    return job_id
+
+
+def start_job(agent_ids, demo, source="manual", engine="lab"):
+    job_id = store.new_id("job")
+    job = {"id": job_id, "status": "running", "events": [], "started": time.time()}
+    JOBS[job_id] = job
+
+    def work():
+        waited = 0
+        while not _run_lock.acquire(timeout=2):
+            waited += 2
+            if job.get("cancel"):
+                job["status"] = "done"
+                _emit(job, {"type": "job_done"})
+                return
+            if waited % 6 == 0:
+                _emit(job, {"type": "status", "text": "Waiting for an earlier test to finish… (use Stop to skip the wait)"})
+        try:
+            for aid in agent_ids:
+                if aid in AGENTS and not job.get("cancel"):
+                    run_agent(aid, demo, job, source, engine)
+        except Exception:
+            _emit(job, {"type": "error", "code": "unexpected"})
+        finally:
+            _run_lock.release()
+            job["status"] = "done"
+            _emit(job, {"type": "job_done"})
     threading.Thread(target=work, daemon=True).start()
     return job_id

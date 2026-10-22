@@ -15,6 +15,7 @@ async function refreshBadge() {
 
 function show(name, opts) {
   if (!TITLES[name]) name = "overview";
+  mountModule(name);
   document.querySelectorAll(".view").forEach((v) => (v.hidden = v.id !== "view-" + name));
   document.querySelectorAll(".nav").forEach((n) => n.classList.toggle("active", n.dataset.view === name));
   document.getElementById("page-title").textContent = TITLES[name];
@@ -28,6 +29,33 @@ function show(name, opts) {
 V.ctx.go = show;
 
 function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("ag-theme", t); } catch (e) { /* ignore */ } }
+
+const mounted = new Set();
+function mountModule(name) {
+  if (!name.startsWith("m-") || mounted.has(name)) return;
+  mounted.add(name);
+  const id = name.slice(2), root = document.getElementById("view-" + name);
+  import(`/modules/${id}/ui.js`).then((m) => m.mount(root, V.ctx)).catch(() => root.replaceChildren(h("div", { cls: "callout", text: "This experiment could not be loaded." })));
+}
+
+async function loadModules() {
+  let mods = [];
+  try { mods = await (await fetch("/api/modules")).json(); } catch (e) { return; }
+  if (!mods.length) return;
+  document.getElementById("module-label").hidden = false;
+  const nav = document.getElementById("module-nav"), main = document.querySelector(".main");
+  for (const m of mods) {
+    const name = "m-" + m.id;
+    TITLES[name] = m.title;
+    const b = h("button", { cls: "nav", "data-view": name }, [h("svg", {}), h("span", { text: m.title })]);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#i-" + (m.icon || "bolt")); svg.append(use); b.replaceChild(svg, b.firstChild);
+    b.onclick = () => show(name);
+    nav.append(b);
+    main.append(h("section", { cls: "view", id: "view-" + name, hidden: "" }));
+    document.getElementById("view-" + name).hidden = true;
+  }
+}
 
 async function boot() {
   try { setTheme(localStorage.getItem("ag-theme") || "dark"); } catch (e) { /* ignore */ }
@@ -53,6 +81,7 @@ async function boot() {
   document.getElementById("exp-json").onclick = () => V.exportAll("json");
   document.getElementById("mark-read").onclick = async () => { await api.readAlerts(); V.renderAlerts(); refreshBadge(); };
   V.initScheduleForm();
+  await loadModules();
 
   show(location.hash.slice(1) || "overview");
   refreshBadge();

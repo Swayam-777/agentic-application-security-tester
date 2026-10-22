@@ -132,6 +132,7 @@ export function createPlayer(host, meta, { fast = false } = {}) {
   let done = null;
   return {
     push(evs) { queue.push(...evs); pump(); },
+    clear() { queue.length = 0; },
     finished: () => new Promise((res) => { if (!busy && !queue.length) res(); else done = res; }),
   };
 }

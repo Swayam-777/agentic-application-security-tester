@@ -36,6 +36,8 @@
       <button class="nav" data-view="automation"><svg><use href="#i-repeat"/></svg><span>Automation</span></button>
       <button class="nav" data-view="alerts"><svg><use href="#i-bell"/></svg><span>Alerts</span><b class="badge" id="alert-badge" hidden>0</b></button>
     </nav>
+    <div class="nav-label" id="module-label" hidden>Experiments</div>
+    <nav id="module-nav"></nav>
     <div class="side-foot">
       <div class="mode-pill" id="mode-pill"><i class="dot"></i><span id="mode-text">Checking…</span></div>
       <div class="chips" id="provider-chips"></div>
@@ -82,6 +84,7 @@
         <div class="setup-row">
           <div class="seg" id="mode-seg" hidden><button data-mode="live" class="on">Live models</button><button data-mode="project" id="seg-project" hidden>Your project agents</button><button data-mode="demo">Simulated demo</button></div>
           <button class="btn primary glow" id="start-btn"><svg><use href="#i-play"/></svg>Start test</button>
+          <button class="btn ghost" id="stop-btn" hidden>Stop</button>
         </div>
       </div>
       <div id="stage"></div>

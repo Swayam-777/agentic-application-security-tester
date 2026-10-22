@@ -46,3 +46,12 @@ OpenRouter / Mistral. For judging, every available AI votes; the lab weighs each
 AI by how often it agreed with the final decision and shows the best explanation.
 Finished live runs are also saved into your project's results file, so your
 original dashboard shows them. To switch that off, add LAB_SAVE_TO_PROJECT=0 to .env.
+
+EXPERIMENTS (each one is a separate folder inside lab/modules/)
+  multiturn   Multi-turn and memory-poisoning attacks (OWASP ASI06)
+  safety_ab   Safety-prompt A/B experiment
+  tradeoff    Security versus usefulness score
+  mcp_tools   Poisoned-tool, lookalike-tool, rug-pull and tool-output attacks (ASI04)
+They appear under "Experiments" in the left menu. To REMOVE one, delete its folder
+from lab/modules/ and restart the lab. Nothing else needs to change. To remove all of
+them, delete everything inside lab/modules/ (keep the folder itself).

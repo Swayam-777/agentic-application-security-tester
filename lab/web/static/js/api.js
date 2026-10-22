@@ -20,6 +20,7 @@ async function call(method, url, body) {
 export const api = {
   state: () => call("GET", "/api/state"),
   start: (agents, mode) => call("POST", "/api/runs", { agents, mode }),
+  cancel: (id) => call("POST", `/api/jobs/${id}/cancel`),
   job: (id, since) => call("GET", `/api/jobs/${id}?since=${since}`),
   runs: () => call("GET", "/api/runs"),
   run: (id) => call("GET", `/api/runs/${id}`),

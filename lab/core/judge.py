@@ -4,6 +4,7 @@ The jurors never see the agent's own claim of "I followed policy" — they judge
 only what the agent actually did and said.
 """
 import json
+import threading
 
 from . import providers, store
 from .agents import parse_json
@@ -80,7 +81,11 @@ def judge(agent_id, rung_idx, result, demo=False, attack=None):
                            "vote": str(d["verdict"]).upper(), "confidence": conf,
                            "reasoning": str(d.get("reasoning", ""))[:300]})
         from . import bridge
-        jurors.extend(bridge.project_jurors(agent_id, attack, result))
+        box = []
+        t = threading.Thread(target=lambda: box.extend(bridge.project_jurors(agent_id, attack, result)), daemon=True)
+        t.start()
+        t.join(25)                      # never let one slow extra juror freeze the run
+        jurors.extend(box)
 
     stats, weight = _weights()
     vuln = [j for j in jurors if j["vote"] == "VULNERABLE"]
